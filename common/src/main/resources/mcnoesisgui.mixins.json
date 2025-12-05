@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "dev.sixik.mcnoesisgui.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
+  "client": [
+    "DebugMixin",
+    "MixinMinecraft$InjectLoadLibrary"
+  ],
+  "mixins": [
+    "MixinRenderSystem"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

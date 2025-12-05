@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "mcnoesisgui",
+  "version": "0.0.1",
+  "name": "MCNoesisGUI",
+  "description": "",
+  "authors": [
+    ""
+  ],
+  "contact": {
+    "homepage": ""
+  },
+  "license": "MIT",
+  "icon": "assets/mcnoesisgui/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.sixik.mcnoesisgui.fabric.McNoesisGuiFabric"
+    ],
+    "client": [
+      "dev.sixik.mcnoesisgui.fabric.client.McNoesisGuiFabricClient"
+    ]
+  },
+  "mixins": [
+    "mcnoesisgui.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.1",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
