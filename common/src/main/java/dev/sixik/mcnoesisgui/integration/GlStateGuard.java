@@ -1,8 +1,6 @@
 package dev.sixik.mcnoesisgui.integration;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13; // Для GL_ACTIVE_TEXTURE
-import org.lwjgl.opengl.GL30; // Для GL_FRAMEBUFFER_BINDING
+import org.lwjgl.opengl.GL13;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
@@ -13,7 +11,7 @@ import static org.lwjgl.opengl.GL30.*;
 
 public final class GlStateGuard implements AutoCloseable {
 
-    private static final int MAX_TEXTURE_UNITS = 16; // Достаточно для MC/Noesis; минимизирует аллокации.
+    private static final int MAX_TEXTURE_UNITS = 16;
 
     private final int prevVao;
     private final int prevProgram;
@@ -33,10 +31,8 @@ public final class GlStateGuard implements AutoCloseable {
     private final int stencilFunc, stencilRef, stencilValueMask;
     private final int stencilFail, stencilZFail, stencilZPass, stencilWriteMask;
 
-    // Новое: Framebuffer binding (критично для избежания конфликтов с MC RenderTarget)
     private final int prevFb;
 
-    // Новое: Texture states (active unit + bindings per unit; только 2D, так как Noesis/MC в основном используют их)
     private final int prevActiveTexture;
     private final int[] textureBindings2D = new int[MAX_TEXTURE_UNITS];
 
@@ -77,10 +73,10 @@ public final class GlStateGuard implements AutoCloseable {
         stencilZPass   = glGetInteger(GL_STENCIL_PASS_DEPTH_PASS);
         stencilWriteMask = glGetInteger(GL_STENCIL_WRITEMASK);
 
-        // Сохраняем FB binding (решает проблему с чёрными областями, если Noesis биндит 0)
+        // save FB binding
         prevFb = glGetInteger(GL_FRAMEBUFFER_BINDING);
 
-        // Сохраняем texture states (решает проблему с текстурами/светом)
+        // save texture states
         prevActiveTexture = glGetInteger(GL13.GL_ACTIVE_TEXTURE);
         for (int unit = 0; unit < MAX_TEXTURE_UNITS; unit++) {
             glActiveTexture(GL13.GL_TEXTURE0 + unit);
@@ -116,10 +112,10 @@ public final class GlStateGuard implements AutoCloseable {
         glStencilOp(stencilFail, stencilZFail, stencilZPass);
         glStencilMask(stencilWriteMask);
 
-        // Восстанавливаем FB binding
+        // restore FB binding
         glBindFramebuffer(GL_FRAMEBUFFER, prevFb);
 
-        // Восстанавливаем texture states (в обратном порядке для безопасности)
+        // restore texture states
         glActiveTexture(prevActiveTexture);
         for (int unit = MAX_TEXTURE_UNITS - 1; unit >= 0; unit--) {
             glActiveTexture(GL13.GL_TEXTURE0 + unit);

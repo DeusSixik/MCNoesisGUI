@@ -1,6 +1,7 @@
 package dev.sixik.mcnoesisgui.integration;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.sixik.mcnoesisgui.wrappers.NSIViewWrapper;
 import dev.sixik.noesisgui.NoesisGui;
@@ -17,7 +18,11 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.lwjgl.glfw.GLFW.glfwGetTime;
+import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
+import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
+import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
+import static org.lwjgl.glfw.GLFW.glfwGetCursorPos;
 import static org.lwjgl.opengl.ARBVertexArrayObject.GL_VERTEX_ARRAY_BINDING;
 import static org.lwjgl.opengl.ARBVertexArrayObject.glBindVertexArray;
 import static org.lwjgl.opengl.GL11.*;
@@ -116,11 +121,38 @@ public class McNSClient {
 
     public static void mouseButtonDown(final int x, final int y, final int button) {
         if(!canRender()) return;
-        currentView.getView().mouseButtonDown(x, y, NSGui_MouseButton.values()[button]);
+        final var t = NSGui_MouseButton.values()[button];
+        System.out.println(t.name());
+        currentView.getView().mouseButtonDown(x, y, t);
     }
 
     public static void mouseButtonUp(final int x, final int y, final int button) {
         if(!canRender()) return;
         currentView.getView().mouseButtonUp(x, y, NSGui_MouseButton.values()[button]);
+    }
+
+    public static void initialCallback() {
+        final Window window = Minecraft.getInstance().getWindow();
+        final long windowIndex = window.getWindow();
+
+        glfwSetCursorPosCallback(windowIndex, (win, xpos, ypos) -> {
+            int x = (int) xpos;
+            int y = (int) ypos;
+            mouseMove(x, y);
+        });
+
+        glfwSetMouseButtonCallback(windowIndex, (win, button, action, mods) -> {
+            double xpos[] = new double[1];
+            double ypos[] = new double[1];
+            glfwGetCursorPos(win, xpos, ypos);
+            int x = (int) xpos[0];
+            int y = (int) ypos[0];
+
+            if (action == GLFW_PRESS) {
+                mouseButtonDown(x, y, button);
+            } else if (action == GLFW_RELEASE) {
+                mouseButtonUp(x, y, button);
+            }
+        });
     }
 }

@@ -24,4 +24,5 @@ public class MixinMinecraft$InjectLoadLibrary {
         McNSClient.noesisUpdate();
         McNSClient.noesisRenderOffscreen();
     }
+
 }

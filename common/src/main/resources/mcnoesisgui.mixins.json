@@ -5,7 +5,8 @@
   "minVersion": "0.8",
   "client": [
     "DebugMixin",
-    "MixinMinecraft$InjectLoadLibrary"
+    "MixinMinecraft$InjectLoadLibrary",
+    "MixinMouseHandler$inject_callback"
   ],
   "mixins": [
     "MixinRenderSystem"

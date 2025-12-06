@@ -45,24 +45,7 @@ public class TestScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double d, double e, int i) {
-        McNSClient.mouseButtonDown((int) d, (int) e, i);
-        return super.mouseClicked(d, e, i);
-    }
-
-    @Override
     public boolean isPauseScreen() {
         return false;
-    }
-
-    @Override
-    public boolean mouseReleased(double d, double e, int i) {
-        McNSClient.mouseButtonUp((int) d, (int) e, i);
-        return super.mouseReleased(d, e, i);
-    }
-
-    @Override
-    public void mouseMoved(double d, double e) {
-        McNSClient.mouseMove((int) d, (int) e);
     }
 }
