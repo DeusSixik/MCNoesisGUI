@@ -1,16 +1,10 @@
 package dev.sixik.mcnoesisgui.mixin;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.blaze3d.systems.RenderSystem;
-import dev.sixik.mcnoesisgui.TestScreen;
-import dev.sixik.mcnoesisgui.integration.McNSClient;
-import dev.sixik.mcnoesisgui.integration.McNSDebug;
-import net.minecraft.client.Minecraft;
+import dev.sixik.mcnoesisgui.demo.show_menu.ShowMenuDemo;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -30,7 +24,6 @@ public abstract class DebugMixin extends AbstractClientPlayer {
 //            McNSClient.openScreen(McNSDebug.createDebug());
 //        else McNSClient.closeScreen();
 
-
-        Minecraft.getInstance().setScreen(new TestScreen(McNSDebug.createDebug()));
+        ShowMenuDemo.openDemo();
     }
 }

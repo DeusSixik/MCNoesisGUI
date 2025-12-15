@@ -13,6 +13,6 @@ public class MixinRenderSystem {
 
     @Inject(method = "flipFrame", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/Tesselator;clear()V", shift = At.Shift.AFTER))
     private static void bts$flipFrame(long l, CallbackInfo ci) {
-        McNSClient.noesisRenderOnscreen();
+
     }
 }

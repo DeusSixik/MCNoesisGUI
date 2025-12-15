@@ -1,10 +1,9 @@
 package dev.sixik.mcnoesisgui.integration;
 
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.systems.RenderSystem;
+import dev.sixik.mcnoesisgui.McNoesisGui;
 import dev.sixik.mcnoesisgui.wrappers.NSIViewWrapper;
 import dev.sixik.noesisgui.NoesisGui;
+import dev.sixik.noesisgui.nsgui.NSGui_Key;
 import dev.sixik.noesisgui.nsgui.NSGui_MouseButton;
 import dev.sixik.noesisgui.nsgui.NSGui_Visibility;
 import dev.sixik.noesisgui.nsgui.NSIView;
@@ -12,24 +11,16 @@ import dev.sixik.noesisgui.nsrenderer.NSRenderDevice;
 import dev.sixik.noesisgui_impl.NSThemes;
 import dev.sixik.noesisgui_ini.NoesisGuiJava;
 import dev.sixik.noesisgui_render.gl.NSOpenGl;
-import net.minecraft.client.Minecraft;
+import dev.sixik.noesisgui_render.lwgl.NoesisGlfwKeyMap;
 
-import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 import static org.lwjgl.glfw.GLFW.glfwGetCursorPos;
-import static org.lwjgl.opengl.ARBVertexArrayObject.GL_VERTEX_ARRAY_BINDING;
-import static org.lwjgl.opengl.ARBVertexArrayObject.glBindVertexArray;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL20.GL_CURRENT_PROGRAM;
-import static org.lwjgl.opengl.GL20.glUseProgram;
-import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER;
-import static org.lwjgl.opengl.GL30.glBindFramebuffer;
 
 public class McNSClient {
 
@@ -43,6 +34,17 @@ public class McNSClient {
         if (NoesisGuiJava.IsLoaded()) return;
 
         NoesisGuiJava.Initialize();
+
+        NoesisGui.setLogHandler((file, line, level, channel, message) -> {
+            switch (NoesisGui.getLogLevelName((int) level)) {
+                case "TRACE" ->   McNoesisGui.LOGGER.trace("[NOESIS] {}:{} {} - {}", file, line, channel, message);
+                case "DEBUG" ->   McNoesisGui.LOGGER.debug("[NOESIS] {}:{} {} - {}", file, line, channel, message);
+                case "INFO" ->    McNoesisGui.LOGGER.info( "[NOESIS] {}:{} {} - {}", file, line, channel, message);
+                case "WARNING" -> McNoesisGui.LOGGER.warn( "[NOESIS] {}:{} {} - {}", file, line, channel, message);
+                case "ERROR" ->   McNoesisGui.LOGGER.error("[NOESIS] {}:{} {} - {}", file, line, channel, message);
+            }
+        });
+
         NoesisGui.init();
 
         NoesisGui.setThemeProviders();
@@ -98,9 +100,14 @@ public class McNSClient {
     public static void noesisRenderOnscreen() {
         if (!canRender()) return;
 
+        long t0 = System.nanoTime();
         try(GlStateGuard glStateGuard = new GlStateGuard()) {
             currentView.getView().getRenderer().render();
         }
+
+        final long time = System.nanoTime() - t0;
+        McNoesisGui.NoesisRender_Time = time;
+        McNoesisGui.NoesisRender_Time_MS = (time / 1e6);
 
         int error = glGetError();
         if (error != GL_NO_ERROR) {
@@ -113,16 +120,24 @@ public class McNSClient {
         currentView.getView().setSize(w, h);
     }
 
-
     public static void mouseMove(final int x, final int y) {
         if(!canRender()) return;
         currentView.getView().mouseMove(x, y);
     }
 
+    public static void mouseWheel(int x, int y, int wheel) {
+        if(!canRender()) return;
+        currentView.getView().mouseWheel(x, y, wheel);
+    }
+
+    public static void mouseHWheel(int x, int y, int wheel) {
+        if(!canRender()) return;
+        currentView.getView().mouseHWheel(x, y, wheel);
+    }
+
     public static void mouseButtonDown(final int x, final int y, final int button) {
         if(!canRender()) return;
         final var t = NSGui_MouseButton.values()[button];
-        System.out.println(t.name());
         currentView.getView().mouseButtonDown(x, y, t);
     }
 
@@ -131,28 +146,32 @@ public class McNSClient {
         currentView.getView().mouseButtonUp(x, y, NSGui_MouseButton.values()[button]);
     }
 
-    public static void initialCallback() {
-        final Window window = Minecraft.getInstance().getWindow();
-        final long windowIndex = window.getWindow();
+    public static void keyDown(final NSGui_Key key) {
+        if(!canRender()) return;
+        currentView.getView().keyDown(key);
+    }
 
-        glfwSetCursorPosCallback(windowIndex, (win, xpos, ypos) -> {
-            int x = (int) xpos;
-            int y = (int) ypos;
-            mouseMove(x, y);
-        });
+    public static void keyUp(final NSGui_Key key) {
+        if(!canRender()) return;
+        currentView.getView().keyUp(key);
+    }
 
-        glfwSetMouseButtonCallback(windowIndex, (win, button, action, mods) -> {
-            double xpos[] = new double[1];
-            double ypos[] = new double[1];
-            glfwGetCursorPos(win, xpos, ypos);
-            int x = (int) xpos[0];
-            int y = (int) ypos[0];
+    public static void keyHandler(final int key, final int action) {
+        if(!canRender()) return;
+        final var noesis_key = NoesisGlfwKeyMap.toNoesisKey(key);
+        final var _view = currentView.getView();
 
-            if (action == GLFW_PRESS) {
-                mouseButtonDown(x, y, button);
-            } else if (action == GLFW_RELEASE) {
-                mouseButtonUp(x, y, button);
-            }
-        });
+        if (action == GLFW_PRESS) {
+            _view.keyDown(noesis_key);
+        } else if (action == GLFW_RELEASE) {
+            _view.keyUp(noesis_key);
+        } else if (action == GLFW_REPEAT) {
+            _view.keyDown(noesis_key);
+        }
+    }
+
+    public static void charEvent(final int codepoint) {
+        if(!canRender()) return;
+        currentView.getView().charEvent(codepoint);
     }
 }

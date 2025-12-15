@@ -28,9 +28,10 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
 
 
-    minecraftRuntimeLibraries files("libs/NoesisGuiJava-1.0-pre-1.jar")
-    minecraftClientRuntimeLibraries files("libs/NoesisGuiJava-1.0-pre-1.jar")
-    minecraftServerRuntimeLibraries files("libs/NoesisGuiJava-1.0-pre-1.jar")
+
+    minecraftRuntimeLibraries files("libs/${rootProject.noesis_java_version}.jar")
+    minecraftClientRuntimeLibraries files("libs/${rootProject.noesis_java_version}.jar")
+    minecraftServerRuntimeLibraries files("libs/${rootProject.noesis_java_version}.jar")
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')

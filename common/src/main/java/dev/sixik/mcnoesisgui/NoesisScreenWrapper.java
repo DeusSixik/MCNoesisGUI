@@ -9,12 +9,12 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-public class TestScreen extends Screen {
+public class NoesisScreenWrapper extends Screen {
 
     private final NSIView view;
     private Window window;
 
-    public TestScreen(NSIView view) {
+    public NoesisScreenWrapper(NSIView view) {
         super(Component.empty());
         this.view = view;
     }
@@ -40,9 +40,7 @@ public class TestScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int i, int j, float f) {
-        if (!McNSClient.canRender()) return;
-    }
+    public void render(GuiGraphics guiGraphics, int i, int j, float f) { }
 
     @Override
     public boolean isPauseScreen() {

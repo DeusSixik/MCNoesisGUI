@@ -25,4 +25,9 @@ public class MixinMinecraft$InjectLoadLibrary {
         McNSClient.noesisRenderOffscreen();
     }
 
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;render(Lnet/minecraft/client/DeltaTracker;Z)V", shift = At.Shift.AFTER))
+    public void bts$runTick$start_render_2(boolean bl, CallbackInfo ci) {
+        McNSClient.noesisRenderOnscreen();
+    }
+
 }

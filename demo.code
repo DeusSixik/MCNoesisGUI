@@ -1,0 +1,139 @@
+#include <NsCore/Ptr.h>
+#include <NsCore/Delegate.h>
+
+#include <NsGui/FrameworkElement.h>
+#include <NsGui/Grid.h>
+#include <NsGui/StackPanel.h>
+#include <NsGui/TextBlock.h>
+#include <NsGui/TextBox.h>
+#include <NsGui/ScrollViewer.h>
+#include <NsGui/WrapPanel.h>
+#include <NsGui/Button.h>
+#include <NsGui/Image.h>
+#include <NsGui/Border.h>
+#include <NsGui/Thickness.h>
+#include <NsGui/Brushes.h>
+
+using namespace Noesis;
+
+struct MobTileData {
+    std::string id;                 // minecraft:zombie
+    std::string displayName;        // "Zombie"
+    Ptr<ImageSource> preview;       // превью-картинка (твой TextureSource)
+};
+
+class MobMenu {
+public:
+    Ptr<FrameworkElement> root;
+    Ptr<TextBox> searchBox;
+    Ptr<WrapPanel> tilesPanel;
+
+    std::vector<MobTileData> all;
+
+    // callback наружу (например, в Java/JNI: отправить пакет на спавн)
+    std::function<void(const std::string& mobId)> onSpawn;
+
+    Ptr<FrameworkElement> Build(std::vector<MobTileData> mobs) {
+        all = std::move(mobs);
+
+        auto grid = MakePtr<Grid>();
+
+        // --- Layout: сверху поиск, ниже список
+        auto rows = grid->GetRowDefinitions();
+        rows->Add(MakePtr<RowDefinition>()); rows->Get(0)->SetHeight(GridLength::Auto);
+        rows->Add(MakePtr<RowDefinition>()); rows->Get(1)->SetHeight(GridLength(1, GridUnitType::Star));
+
+        // Search box
+        searchBox = MakePtr<TextBox>();
+        searchBox->SetMargin(Thickness(10));
+        searchBox->SetFontSize(18);
+        Grid::SetRow(searchBox, 0);
+
+        // Реакция на ввод (фильтр)
+        searchBox->TextChanged() += MakeDelegate(this, &MobMenu::OnSearchChanged);
+
+        // Scroll + WrapPanel
+        auto scroll = MakePtr<ScrollViewer>();
+        scroll->SetMargin(Thickness(10));
+        Grid::SetRow(scroll, 1);
+
+        tilesPanel = MakePtr<WrapPanel>();
+        tilesPanel->SetItemWidth(140);
+        tilesPanel->SetItemHeight(170);
+        scroll->SetContent(tilesPanel);
+
+        grid->GetChildren()->Add(searchBox);
+        grid->GetChildren()->Add(scroll);
+
+        root = grid;
+
+        RebuildTiles(""); // initial
+        return root;
+    }
+
+private:
+    void OnSearchChanged(BaseComponent*, const RoutedEventArgs&) {
+        NsString text = searchBox->GetText();
+        RebuildTiles(text.Str());
+    }
+
+    void RebuildTiles(const std::string& filter) {
+        tilesPanel->GetChildren()->Clear();
+
+        for (const auto& m : all) {
+            if (!filter.empty()) {
+                // простой фильтр по имени/ид
+                auto f = ToLower(filter);
+                if (ToLower(m.displayName).find(f) == std::string::npos &&
+                    ToLower(m.id).find(f) == std::string::npos) {
+                    continue;
+                }
+            }
+
+            tilesPanel->GetChildren()->Add(MakeTile(m));
+        }
+    }
+
+    Ptr<UIElement> MakeTile(const MobTileData& m) {
+        auto btn = MakePtr<Button>();
+        btn->SetMargin(Thickness(6));
+        btn->SetPadding(Thickness(6));
+        btn->SetBackground(Brushes::Transparent());
+
+        // Содержимое плитки
+        auto sp = MakePtr<StackPanel>();
+
+        auto border = MakePtr<Border>();
+        border->SetCornerRadius(CornerRadius(8));
+        border->SetHeight(110);
+        border->SetBackground(Brushes::Black()); // поменяй под тему
+
+        auto img = MakePtr<Image>();
+        img->SetStretch(Stretch::Uniform);
+        img->SetSource(m.preview); // твоя картинка/текстура
+        border->SetChild(img);
+
+        auto tb = MakePtr<TextBlock>();
+        tb->SetText(m.displayName.c_str());
+        tb->SetMargin(Thickness(0, 6, 0, 0));
+        tb->SetTextAlignment(TextAlignment::Center);
+
+        sp->GetChildren()->Add(border);
+        sp->GetChildren()->Add(tb);
+
+        btn->SetContent(sp);
+
+        // Клик -> spawn
+        // В Noesis у Button есть Click routed event
+        btn->Click() += MakeDelegate([this, id = m.id](BaseComponent*, const RoutedEventArgs&) {
+            if (onSpawn) onSpawn(id);
+        });
+
+        return btn;
+    }
+
+    static std::string ToLower(std::string s) {
+        for (char& c : s) c = (char)tolower((unsigned char)c);
+        return s;
+    }
+};

@@ -1,40 +1,43 @@
 package dev.sixik.mcnoesisgui.integration;
 
+import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL20;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
 
+import static org.lwjgl.opengl.ARBImaging.GL_BLEND_COLOR;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 public final class GlStateGuard implements AutoCloseable {
 
-    private static final int MAX_TEXTURE_UNITS = 16;
-
     private final int prevVao;
     private final int prevProgram;
     private final int[] viewport = new int[4];
 
-    private final boolean blend;
-    private final boolean depthTest;
-    private final boolean scissor;
-    private final boolean cull;
+    private final boolean blend, depthTest, cull, stencil, framebufferSrgb;
     private final boolean depthMask;
+
     private final boolean[] colorMask = new boolean[4];
 
     private final int blendSrcRgb, blendDstRgb, blendSrcAlpha, blendDstAlpha;
     private final int blendEqRgb, blendEqAlpha;
+    private final float[] blendColor = new float[4];
 
-    private final boolean stencil;
     private final int stencilFunc, stencilRef, stencilValueMask;
     private final int stencilFail, stencilZFail, stencilZPass, stencilWriteMask;
 
-    private final int prevFb;
+    private final int prevDrawFb;
+    private final int prevReadFb;
 
+    // FAST texture restore (active unit only)
     private final int prevActiveTexture;
-    private final int[] textureBindings2D = new int[MAX_TEXTURE_UNITS];
+    private final int prevTex2D;
 
     public GlStateGuard() {
         prevVao     = glGetInteger(GL_VERTEX_ARRAY_BINDING);
@@ -43,11 +46,13 @@ public final class GlStateGuard implements AutoCloseable {
 
         blend      = glIsEnabled(GL_BLEND);
         depthTest  = glIsEnabled(GL_DEPTH_TEST);
-        scissor    = glIsEnabled(GL_SCISSOR_TEST);
         cull       = glIsEnabled(GL_CULL_FACE);
+        stencil    = glIsEnabled(GL_STENCIL_TEST);
+        framebufferSrgb = glIsEnabled(GL_FRAMEBUFFER_SRGB);
+
         depthMask  = glGetBoolean(GL_DEPTH_WRITEMASK);
 
-        // color mask RGBA
+        // color mask
         try (MemoryStack stack = MemoryStack.stackPush()) {
             ByteBuffer buf = stack.malloc(4);
             glGetBooleanv(GL_COLOR_WRITEMASK, buf);
@@ -64,7 +69,8 @@ public final class GlStateGuard implements AutoCloseable {
         blendEqRgb     = glGetInteger(GL_BLEND_EQUATION_RGB);
         blendEqAlpha   = glGetInteger(GL_BLEND_EQUATION_ALPHA);
 
-        stencil        = glIsEnabled(GL_STENCIL_TEST);
+        glGetFloatv(GL_BLEND_COLOR, blendColor);
+
         stencilFunc    = glGetInteger(GL_STENCIL_FUNC);
         stencilRef     = glGetInteger(GL_STENCIL_REF);
         stencilValueMask = glGetInteger(GL_STENCIL_VALUE_MASK);
@@ -73,55 +79,45 @@ public final class GlStateGuard implements AutoCloseable {
         stencilZPass   = glGetInteger(GL_STENCIL_PASS_DEPTH_PASS);
         stencilWriteMask = glGetInteger(GL_STENCIL_WRITEMASK);
 
-        // save FB binding
-        prevFb = glGetInteger(GL_FRAMEBUFFER_BINDING);
+        prevDrawFb = glGetInteger(GL_DRAW_FRAMEBUFFER_BINDING);
+        prevReadFb = glGetInteger(GL_READ_FRAMEBUFFER_BINDING);
 
-        // save texture states
         prevActiveTexture = glGetInteger(GL13.GL_ACTIVE_TEXTURE);
-        for (int unit = 0; unit < MAX_TEXTURE_UNITS; unit++) {
-            glActiveTexture(GL13.GL_TEXTURE0 + unit);
-            textureBindings2D[unit] = glGetInteger(GL_TEXTURE_BINDING_2D);
-        }
-        glActiveTexture(prevActiveTexture); // Восстанавливаем active сразу, чтобы не сломать конструктор
+        prevTex2D = glGetInteger(GL_TEXTURE_BINDING_2D);
     }
 
     @Override
     public void close() {
-        // Programs & VAO
         glUseProgram(prevProgram);
         glBindVertexArray(prevVao);
 
-        // Viewport
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFb);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFb);
+
         glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
-        // Enable/disable flags
         setEnabled(GL_BLEND, blend);
         setEnabled(GL_DEPTH_TEST, depthTest);
-        setEnabled(GL_SCISSOR_TEST, scissor);
         setEnabled(GL_CULL_FACE, cull);
 
-        glDepthMask(depthMask);
+        glDisable(GL_SCISSOR_TEST);
 
+        glDepthMask(depthMask);
         glColorMask(colorMask[0], colorMask[1], colorMask[2], colorMask[3]);
 
         glBlendFuncSeparate(blendSrcRgb, blendDstRgb, blendSrcAlpha, blendDstAlpha);
         glBlendEquationSeparate(blendEqRgb, blendEqAlpha);
+        glBlendColor(blendColor[0], blendColor[1], blendColor[2], blendColor[3]);
 
         setEnabled(GL_STENCIL_TEST, stencil);
         glStencilFunc(stencilFunc, stencilRef, stencilValueMask);
         glStencilOp(stencilFail, stencilZFail, stencilZPass);
         glStencilMask(stencilWriteMask);
 
-        // restore FB binding
-        glBindFramebuffer(GL_FRAMEBUFFER, prevFb);
+        setEnabled(GL_FRAMEBUFFER_SRGB, framebufferSrgb);
 
-        // restore texture states
         glActiveTexture(prevActiveTexture);
-        for (int unit = MAX_TEXTURE_UNITS - 1; unit >= 0; unit--) {
-            glActiveTexture(GL13.GL_TEXTURE0 + unit);
-            glBindTexture(GL_TEXTURE_2D, textureBindings2D[unit]);
-        }
-        glActiveTexture(prevActiveTexture);
+        glBindTexture(GL_TEXTURE_2D, prevTex2D);
     }
 
     private static void setEnabled(int cap, boolean enable) {
