@@ -2,6 +2,7 @@
 package dev.sixik.mcnoesisgui;
 
 import com.mojang.blaze3d.platform.Window;
+import dev.sixik.mcnoesisgui.api.NoesisScreenWrapper;
 import dev.sixik.mcnoesisgui.integration.McNSClient;
 import dev.sixik.noesisgui.nsgui.NSIView;
 import net.minecraft.client.Minecraft;
@@ -9,26 +10,26 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-public class NoesisScreenWrapper extends Screen {
+public class NoesisScreenWrapperImpl extends Screen implements NoesisScreenWrapper {
 
     private final NSIView view;
     private Window window;
 
-    public NoesisScreenWrapper(NSIView view) {
+    public NoesisScreenWrapperImpl(NSIView view) {
         super(Component.empty());
         this.view = view;
     }
 
     @Override
     public void onClose() {
-        McNSClient.closeScreen();
+        onScreenClose();
         super.onClose();
     }
 
     @Override
     protected void init() {
         super.init();
-        McNSClient.openScreen(view);
+        onScreenInit();
         window = Minecraft.getInstance().getWindow();
         McNSClient.resize(window.getWidth(), window.getHeight());
     }
@@ -45,5 +46,10 @@ public class NoesisScreenWrapper extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    @Override
+    public NSIView getView() {
+        return view;
     }
 }

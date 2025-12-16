@@ -19,13 +19,6 @@ public class MixinMouseHandler$inject_callback {
     @Unique
     private static final float NS$WHEEL_UNIT = 120.0f;
 
-
-    @Shadow
-    private double xpos;
-
-    @Shadow
-    private double ypos;
-
     @Shadow
     @Final
     private Minecraft minecraft;

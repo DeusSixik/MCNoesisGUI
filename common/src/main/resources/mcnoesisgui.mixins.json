@@ -4,14 +4,11 @@
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
   "client": [
-    "DebugMixin",
     "MixinKeyboardHandler$inject_callback",
     "MixinMinecraft$InjectLoadLibrary",
     "MixinMouseHandler$inject_callback"
   ],
-  "mixins": [
-    "MixinRenderSystem"
-  ],
+  "mixins": [ ],
   "injectors": {
     "defaultRequire": 1
   }

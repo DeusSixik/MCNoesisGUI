@@ -1,6 +1,7 @@
 package dev.sixik.mcnoesisgui.integration;
 
 import dev.sixik.mcnoesisgui.McNoesisGui;
+import dev.sixik.mcnoesisgui.loaders.McNamespacedXamlLoader;
 import dev.sixik.mcnoesisgui.wrappers.NSIViewWrapper;
 import dev.sixik.noesisgui.NoesisGui;
 import dev.sixik.noesisgui.nsgui.NSGui_Key;
@@ -47,6 +48,7 @@ public class McNSClient {
 
         NoesisGui.init();
 
+        NoesisGui.setXamlProvider(new McNamespacedXamlLoader("mcnoesisgui", ""));
         NoesisGui.setThemeProviders();
         NoesisGui.loadApplicationResources(NSThemes.darkBlue());
 

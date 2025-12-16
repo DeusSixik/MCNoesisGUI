@@ -34,3 +34,6 @@
 /neoforge/.gradle
 /common/build
 /fabric/.gradle
+/neoforge/run
+/fabric/build/
+/neoforge/build/

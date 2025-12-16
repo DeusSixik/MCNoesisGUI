@@ -1,7 +1,7 @@
 package dev.sixik.mcnoesisgui.demo.show_menu;
 
 import dev.sixik.mcnoesisgui.McNoesisGui;
-import dev.sixik.mcnoesisgui.NoesisScreenWrapper;
+import dev.sixik.mcnoesisgui.NoesisScreenWrapperImpl;
 import dev.sixik.mcnoesisgui.integration.McNSClient;
 import dev.sixik.noesisgui.NoesisGui;
 import dev.sixik.noesisgui.nscore.NSBaseComponent;
@@ -30,7 +30,7 @@ public class ShowMenuDemo {
     private static boolean navGuard;
 
     public static void openDemo() {
-        Minecraft.getInstance().setScreen(new NoesisScreenWrapper(getOrCreate()) {
+        Minecraft.getInstance().setScreen(new NoesisScreenWrapperImpl(getOrCreate()) {
             @Override
             public void tick() {
                 if(fpsText != null) {

@@ -1,0 +1,11 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- A simple style we will reference from another XAML -->
+  <Style x:Key="TestButtonStyle" TargetType="Button">
+    <Setter Property="Padding" Value="10,6"/>
+    <Setter Property="Margin" Value="6"/>
+    <Setter Property="FontSize" Value="16"/>
+  </Style>
+
+</ResourceDictionary>
